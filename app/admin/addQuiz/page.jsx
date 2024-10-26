@@ -34,13 +34,16 @@ const Page = () => {
     if (e.target.files[0]) {
       const file = e.target.files[0];
       setImage(file);
-      // 이전 URL 객체가 있다면 해제
       if (imagePreview) {
         URL.revokeObjectURL(imagePreview);
       }
       const newImagePreview = URL.createObjectURL(file);
       setImagePreview(newImagePreview);
-      setData((prev) => ({ ...prev, type: 'PIC' }));
+      setData((prev) => ({
+        ...prev,
+        type: 'PIC',
+        pic_path: file.name, // 파일 이름을 pic_path에 설정
+      }));
     }
   };
 
@@ -51,7 +54,6 @@ const Page = () => {
     setImage(null);
     setImagePreview(null);
     setData((prev) => ({ ...prev, type: 'TXT', pic_path: '' }));
-    // 파일 입력 리셋
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -123,7 +125,12 @@ const Page = () => {
           type: 'TXT',
           pic_path: '',
         });
+        // 이미지 관련 상태 초기화
         setImage(null);
+        setImagePreview(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       } else {
         toast.error('퀴즈 추가에 실패했습니다.');
       }
@@ -319,7 +326,7 @@ const Page = () => {
               className="flex-1 px-3 py-2 border rounded-md"
               value={data.pic_path}
               onChange={onChangeHandler}
-              disabled
+              readOnly
             />
           </div>
 
