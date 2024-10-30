@@ -17,7 +17,7 @@ export async function GET(request) {
     searchParams
   } = new URL(request.url);
   const sessionId = searchParams.get('sessionId');
-  const cat = searchParams.get('cat') || 'all';
+  const questType = searchParams.get('questType') || 'All';
   const order = searchParams.get('order') || 'RAND()';
   const limit = parseInt(searchParams.get('limit')) || 10;
   const page = parseInt(searchParams.get('page')) || 1;
@@ -30,16 +30,17 @@ export async function GET(request) {
 
   try {
     const db = await createConnection();
-    let sql = "SELECT * FROM TOPIK";
-    let countSql = "SELECT COUNT(*) as total FROM TOPIK";
+    let sql = "SELECT * FROM QUIZ";
+    let countSql = "SELECT COUNT(*) as total FROM QUIZ";
     const sqlParams = [];
     const countSqlParams = [];
 
-    if (cat !== 'all') {
-      sql += " WHERE level = ?";
-      countSql += " WHERE level = ?";
-      sqlParams.push(cat);
-      countSqlParams.push(cat);
+    // questType 파라미터 처리
+    if (questType !== 'All') {
+      sql += " WHERE quest_type = ?";
+      countSql += " WHERE quest_type = ?";
+      sqlParams.push(questType);
+      countSqlParams.push(questType);
     }
 
     // order 파라미터 처리
@@ -58,7 +59,7 @@ export async function GET(request) {
 
     // 세션 ID가 없는 경우에만 새 세션 생성 (기존 로직 유지)
     if (!sessionId) {
-      const newSessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+      const newSessionId = Date.now().toString(36) + Math.random().toString(36).slice(2);
       quizSessions[newSessionId] = {
         quiz,
         createdAt: new Date()
@@ -118,8 +119,8 @@ export async function POST(request) {
 
     // MySQL에 데이터 저장
     const sql = `
-      INSERT INTO TOPIK (question, option1, option2, option3, option4, ans, level, type, pic_path)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO QUIZ(question, option1, option2, option3, option4, ans, type, pic_path, quest_type)
+      VALUES( ? , ? , ? , ? , ? , ? , ? , ? , ? )
     `;
     const values = [
       formData.get('question'),
@@ -128,9 +129,9 @@ export async function POST(request) {
       formData.get('option3'),
       formData.get('option4'),
       formData.get('ans'),
-      formData.get('level'),
       formData.get('type'),
       pic_path,
+      formData.get('quest_type'),
     ];
 
     await db.query(sql, values);

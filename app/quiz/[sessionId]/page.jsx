@@ -116,14 +116,14 @@ export default function Quiz() {
 
   const stopClick = () => {
     Swal.fire({
-      title: '퀴즈를 중단하시겠습니까?',
-      text: '진행 상황이 저장되지 않습니다.',
+      title: 'Are you sure you want to quit the quiz?',
+      text: 'Your progress will not be saved.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
-      confirmButtonText: '네, 중단합니다',
-      cancelButtonText: '아니오, 계속합니다',
+      confirmButtonText: 'Yes, quit',
+      cancelButtonText: 'No, continue',
     }).then((result) => {
       if (result.isConfirmed) {
         router.push('/');
@@ -175,8 +175,7 @@ export default function Quiz() {
                   alt="Quiz Image"
                   width={400}
                   height={400}
-                  layout="responsive"
-                  objectFit="contain"
+                  className="w-full h-auto object-contain"
                 />
               </div>
             )}

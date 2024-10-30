@@ -83,7 +83,7 @@ export default function List() {
             href="/"
             className="p-1 focus:outline-none focus:ring-2 focus:ring-blue-300 rounded"
           >
-            <Image src="/quiz-icon.png" alt="Go to Quiz" width={32} height={32} />
+            <Image src="/list-icon.png" alt="Go to Quiz" width={32} height={32} />
           </Link>
         </div>
       </div>
@@ -93,7 +93,7 @@ export default function List() {
             <th className="border border-gray-300 p-2 text-center w-1/12">ID</th>
             <th className="border border-gray-300 p-2 text-center w-2/12">이미지</th>
             <th className="border border-gray-300 p-2 text-center w-5/12">문제</th>
-            <th className="border border-gray-300 p-2 text-center w-1/12">레벨</th>
+            <th className="border border-gray-300 p-2 text-center w-1/12">종류</th>
             <th className="border border-gray-300 p-2 text-center w-1/12">유형</th>
             <th className="border border-gray-300 p-2 text-center w-2/12">액션</th>
           </tr>
@@ -114,7 +114,7 @@ export default function List() {
                 )}
               </td>
               <td className="border border-gray-300 p-2 truncate">{quiz.question}</td>
-              <td className="border border-gray-300 p-2 text-center">{quiz.level}</td>
+              <td className="border border-gray-300 p-2 text-center">{quiz.quest_type}</td>
               <td className="border border-gray-300 p-2 text-center">{quiz.type}</td>
               <td className="border border-gray-300 p-2">
                 <div className="flex justify-center items-center space-x-2">

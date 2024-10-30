@@ -20,7 +20,7 @@ const Page = () => {
     option3: '',
     option4: '',
     ans: '1',
-    level: '1',
+    quest_type: 'TOPIK',
     type: 'TXT',
     pic_path: '',
   });
@@ -82,7 +82,7 @@ const Page = () => {
               option3: quizData.option3 || '',
               option4: quizData.option4 || '',
               ans: quizData.ans || '1',
-              level: quizData.level || '1',
+              quest_type: quizData.quest_type || 'TOPIK',
               type: quizData.type || 'TXT',
               pic_path: quizData.pic_path || '',
             });
@@ -121,7 +121,7 @@ const Page = () => {
           option3: '',
           option4: '',
           ans: '1',
-          level: '1',
+          quest_type: 'TOPIK',
           type: 'TXT',
           pic_path: '',
         });
@@ -280,19 +280,19 @@ const Page = () => {
           </div>
 
           <div className="flex items-center space-x-2">
-            <label htmlFor="level" className="w-1/4 text-lg font-medium">
-              레벨
+            <label htmlFor="quest_type" className="w-1/4 text-lg font-medium">
+              문제 종류
             </label>
             <select
-              id="level"
-              name="level"
+              id="quest_type"
+              name="quest_type"
               className="flex-1 px-3 py-2 border rounded-md"
-              value={data.level}
+              value={data.quest_type}
               onChange={onChangeHandler}
             >
-              {[1, 2, 3].map((num) => (
-                <option key={num} value={num}>
-                  {num}
+              {['TOPIK', 'FOOD', 'CULTURE'].map((type) => (
+                <option key={type} value={type}>
+                  {type}
                 </option>
               ))}
             </select>

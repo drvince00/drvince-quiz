@@ -13,7 +13,7 @@ export async function GET(request) {
   try {
     const db = await createConnection();
 
-    const [quiz] = await db.query("SELECT * FROM TOPIK WHERE id = ?", [id]);
+    const [quiz] = await db.query("SELECT * FROM QUIZ WHERE id = ?", [id]);
 
     if (quiz.length === 0) {
       return NextResponse.json({
@@ -41,11 +41,11 @@ export async function DELETE(request) {
     const db = await createConnection();
 
     // 퀴즈 정보 가져오기
-    const [quiz] = await db.query("SELECT * FROM TOPIK WHERE id = ?", [id]);
+    const [quiz] = await db.query("SELECT * FROM QUIZ WHERE id = ?", [id]);
 
     if (quiz.length === 0) {
       return NextResponse.json({
-        message: "퀴즈를 찾을 수 없습니���."
+        message: "퀴즈를 찾을 수 없습니다."
       }, {
         status: 404
       });
@@ -62,7 +62,7 @@ export async function DELETE(request) {
     }
 
     // 데이터베이스에서 퀴즈 삭제
-    await db.query("DELETE FROM TOPIK WHERE id = ?", [id]);
+    await db.query("DELETE FROM QUIZ WHERE id = ?", [id]);
 
     return NextResponse.json({
       message: "퀴즈가 성공적으로 삭제되었습니다."
@@ -86,8 +86,8 @@ export async function PUT(request) {
 
     // 퀴즈 업데이트 (이미지와 타입은 변경하지 않음)
     const [result] = await db.query(
-      "UPDATE TOPIK SET question = ?, option1 = ?, option2 = ?, option3 = ?, option4 = ?, ans = ?, level = ? WHERE id = ?",
-      [data.question, data.option1, data.option2, data.option3, data.option4, data.ans, data.level, id]
+      "UPDATE QUIZ SET question = ?, option1 = ?, option2 = ?, option3 = ?, option4 = ?, ans = ?, quest_type = ? WHERE id = ?",
+      [data.question, data.option1, data.option2, data.option3, data.option4, data.ans, data.quest_type, id]
     );
 
     if (result.affectedRows === 0) {
