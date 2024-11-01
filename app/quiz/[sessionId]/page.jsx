@@ -20,6 +20,7 @@ export default function Quiz() {
   const [isSoundOn, setIsSoundOn] = useState(true);
   const [imageSrc, setImageSrc] = useState(null);
   const [userName, setUserName] = useState('User');
+  const [categoryStats, setCategoryStats] = useState({});
 
   const option_array = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
@@ -27,32 +28,34 @@ export default function Quiz() {
   const { sessionId } = useParams();
   const searchParams = useSearchParams();
 
+  const correctAudioRef = useRef(null);
+  const wrongAudioRef = useRef(null);
+
+  useEffect(() => {
+    console.log('오디오 로드 시작');
+    correctAudioRef.current = new Audio('/sounds/correct.mp3');
+    wrongAudioRef.current = new Audio('/sounds/wrong.mp3');
+    console.log('오디오 로드 완료');
+  }, []);
+
   useEffect(() => {
     async function fetchQuizData() {
+      console.log('퀴즈 데이터 로딩 시작');
       try {
         const response = await fetch(`/api/quiz?sessionId=${sessionId}`);
         const data = await response.json();
+        console.log('퀴즈 데이터 로드 완료:', data);
         setQuiz(data.quiz);
         setQuestion(data.quiz[0]);
-        setLoading(false);
       } catch (error) {
         console.error('퀴즈 데이터를 불러오는 데 실패했습니다:', error);
+      } finally {
         setLoading(false);
       }
     }
     fetchQuizData();
     setUserName(searchParams.get('userName') || 'User');
   }, [sessionId, searchParams]);
-
-  const correctAudioRef = useRef(null);
-  const wrongAudioRef = useRef(null);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      correctAudioRef.current = new Audio('/correct.mp3');
-      wrongAudioRef.current = new Audio('/wrong.mp3');
-    }
-  }, []);
 
   useEffect(() => {
     if (question && question.type === 'PIC') {
@@ -61,13 +64,30 @@ export default function Quiz() {
     }
   }, [question]);
 
-  const playSound = (isCorrect) => {
-    if (isSoundOn && typeof window !== 'undefined') {
-      if (isCorrect && correctAudioRef.current) {
-        correctAudioRef.current.play().catch((e) => console.error('오디오 재생 실패:', e));
-      } else if (!isCorrect && wrongAudioRef.current) {
-        wrongAudioRef.current.play().catch((e) => console.error('오디오 재생 실패:', e));
+  useEffect(() => {
+    if (quiz.length > 0) {
+      const stats = quiz.reduce((acc, q) => {
+        if (!acc[q.quest_type]) {
+          acc[q.quest_type] = { total: 0, correct: 0 };
+        }
+        acc[q.quest_type].total += 1;
+        return acc;
+      }, {});
+      setCategoryStats(stats);
+    }
+  }, [quiz]);
+
+  const playSound = async (isCorrect) => {
+    if (!isSoundOn) return;
+
+    try {
+      const audioRef = isCorrect ? correctAudioRef.current : wrongAudioRef.current;
+      if (audioRef) {
+        audioRef.currentTime = 0;
+        await audioRef.play();
       }
+    } catch (error) {
+      console.error('오디오 재생 오류:', error);
     }
   };
 
@@ -76,6 +96,13 @@ export default function Quiz() {
       if (question.ans === ans) {
         e.target.classList.add('bg-[#dffff2]', 'border-[#00d397]');
         setScore((prev) => prev + 1);
+        setCategoryStats((prev) => ({
+          ...prev,
+          [question.quest_type]: {
+            ...prev[question.quest_type],
+            correct: prev[question.quest_type].correct + 1,
+          },
+        }));
         playSound(true);
       } else {
         e.target.classList.add('bg-[#FFEBEB]', 'border-[#ff4a4a]');
@@ -132,37 +159,63 @@ export default function Quiz() {
   };
 
   if (loading) {
-    return <p className="text-center text-xl">Loading...</p>;
+    return (
+      <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
+          <p className="text-gray-600">퀴즈를 준비하고 있습니다...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-white text-[#262626] flex flex-col gap-5 rounded-lg p-5 md:p-10">
-      <div className={`${question.type === 'TXT' ? 'w-4/5 mx-auto' : 'w-full'}`}>
-        <div className="flex justify-end items-center mb-5">
-          <button onClick={volumeToggleClick} className="w-8 h-8 ml-2">
-            <Image src={isSoundOn ? volumeon : volumeoff} alt="volume" width={20} height={20} />
-          </button>
-          <button onClick={stopClick} className="w-8 h-8 ml-2">
-            <Image src={stopBtn} alt="stopBtn" width={20} height={20} />
-          </button>
-        </div>
-        <h1 className="text-2xl md:text-3xl font-bold mb-5">Quiz App</h1>
-        <hr className="h-0.5 bg-[#707070] border-0 mb-5" />
-      </div>
       {result ? (
         <div className="flex flex-col items-center">
           <h2 className="text-xl md:text-2xl font-medium mb-5">
-            {userName} scored {score} out of {quiz.length}.
+            {userName} scored {score} out of {quiz.length}
           </h2>
+          <div className="w-full max-w-md mb-8">
+            <h3 className="text-lg md:text-xl font-medium mb-4">Category Statistics</h3>
+            {Object.entries(categoryStats).map(([type, stats]) => (
+              <div
+                key={type}
+                className="flex justify-between items-center mb-2 p-2 bg-gray-50 rounded"
+              >
+                <span className="text-lg">{type}</span>
+                <div className="flex items-center gap-4">
+                  <span>
+                    {stats.correct} out of {stats.total}
+                  </span>
+                  <span className="text-blue-600">
+                    ({Math.round((stats.correct / stats.total) * 100)}%)
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
           <button
             className="w-48 md:w-64 h-12 md:h-16 bg-[#553f9a] text-white text-lg md:text-2xl font-medium rounded-lg"
             onClick={reset}
           >
-            Reset
+            Retry
           </button>
         </div>
       ) : (
         <>
+          <div className={`${question.type === 'TXT' ? 'w-4/5 mx-auto' : 'w-full'}`}>
+            <div className="flex justify-end items-center mb-5">
+              <button onClick={volumeToggleClick} className="w-8 h-8 ml-2">
+                <Image src={isSoundOn ? volumeon : volumeoff} alt="volume" width={20} height={20} />
+              </button>
+              <button onClick={stopClick} className="w-8 h-8 ml-2">
+                <Image src={stopBtn} alt="stopBtn" width={20} height={20} />
+              </button>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-bold mb-5">Quiz App</h1>
+            <hr className="h-0.5 bg-[#707070] border-0 mb-5" />
+          </div>
           <div
             className={`flex flex-col md:flex-row gap-5 ${
               question.type === 'TXT' ? 'justify-center' : ''

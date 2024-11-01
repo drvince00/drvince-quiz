@@ -11,6 +11,21 @@ export default function Home() {
   const [questionCount, setQuestionCount] = useState(10);
   const router = useRouter();
 
+  const correctAudioRef = useRef(null);
+  const wrongAudioRef = useRef(null);
+
+  const [audioLoaded, setAudioLoaded] = useState(false);
+
+  useEffect(() => {
+    console.log('오디오 프리로드 시작');
+    correctAudioRef.current = new Audio('/sounds/correct.mp3');
+    wrongAudioRef.current = new Audio('/sounds/wrong.mp3');
+
+    sessionStorage.setItem('audioPreloaded', 'true');
+    console.log('오디오 프리로드 완료');
+    setAudioLoaded(true);
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -26,7 +41,7 @@ export default function Home() {
 
   const handleClick = async () => {
     const name = inputRef.current.value;
-    if (name) {
+    if (name && audioLoaded) {
       const response = await fetch(`/api/quiz?questType=${questType}&limit=${questionCount}`);
       const { sessionId } = await response.json();
       router.push(`/quiz/${sessionId}?userName=${encodeURIComponent(name)}`);
@@ -36,9 +51,9 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center h-screen">
       <div className="w-64 space-y-4">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2 space-x-2">
           <label htmlFor="questType" className="text-lg font-medium">
-            Choose Type
+            Category
           </label>
           <select
             id="questType"
@@ -77,10 +92,13 @@ export default function Home() {
           ref={inputRef}
         />
         <button
-          className="w-full h-8 bg-blue-500 text-white rounded text-lg font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          className={`w-full h-8 ${
+            audioLoaded ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400'
+          } text-white rounded text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50`}
           onClick={handleClick}
+          disabled={!audioLoaded}
         >
-          Start
+          {audioLoaded ? 'Start' : 'Loading...'}
         </button>
       </div>
     </div>
