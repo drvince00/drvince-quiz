@@ -5,12 +5,64 @@ import {
   NextResponse
 } from "next/server";
 import {
-  writeFile,
-  unlink
-} from 'fs/promises';
+  Octokit
+} from "@octokit/rest";
 import path from 'path';
 
+const octokit = new Octokit({
+  auth: process.env.GITHUB_TOKEN
+});
+
+const GITHUB_CONFIG = {
+  owner: "drvince00",
+  repo: "drvince-quiz",
+  branch: "main"
+};
+
 let quizSessions = {};
+
+// GitHub에 이미지 업로드 함수
+async function uploadImageToGitHub(imageBuffer, fileName) {
+  try {
+    const content = imageBuffer.toString('base64');
+
+    await octokit.repos.createOrUpdateFileContents({
+      ...GITHUB_CONFIG,
+      path: `public/quiz/${fileName}`,
+      message: `Add quiz image ${fileName}`,
+      content: content,
+    });
+
+    return `/quiz/${fileName}`;
+  } catch (error) {
+    console.error('GitHub 업로드 에러:', JSON.stringify(error, null, 2));
+    throw error;
+  }
+}
+
+// GitHub에서 이미지 삭제 함수
+async function deleteImageFromGitHub(filePath) {
+  try {
+    // 현재 파일의 SHA 가져오기
+    const {
+      data: fileData
+    } = await octokit.repos.getContent({
+      ...GITHUB_CONFIG,
+      path: `public${filePath}`,
+    });
+
+    // 파일 삭제
+    await octokit.repos.deleteFile({
+      ...GITHUB_CONFIG,
+      path: `public${filePath}`,
+      message: `Delete quiz image ${path.basename(filePath)}`,
+      sha: fileData.sha,
+    });
+  } catch (error) {
+    console.error('GitHub 삭제 에러:', JSON.stringify(error, null, 2));
+    throw error;
+  }
+}
 
 export async function GET(request) {
   const {
@@ -112,9 +164,8 @@ export async function POST(request) {
       const bytes = await image.arrayBuffer();
       const buffer = Buffer.from(bytes);
       const filename = Date.now() + '_' + image.name.split('\\').pop().split('/').pop();
-      pic_path = `/quiz/${filename}`;
-      const filepath = path.join(process.cwd(), 'public', 'quiz', filename);
-      await writeFile(filepath, buffer);
+      // GitHub에 이미지 업로드
+      pic_path = await uploadImageToGitHub(buffer, filename);
     }
 
     // MySQL에 데이터 저장
@@ -138,6 +189,38 @@ export async function POST(request) {
 
     return NextResponse.json({
       message: '퀴즈가 성공적으로 추가되었습니다.'
+    });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({
+      error: error.message
+    }, {
+      status: 500
+    });
+    }
+    }
+
+    export async function DELETE(request) {
+        try {
+          const {
+            searchParams
+          } = new URL(request.url);
+          const id = searchParams.get('id');
+          const db = await createConnection();
+
+          // 이미지 경로 조회
+          const [quiz] = await db.query('SELECT pic_path FROM QUIZ WHERE id = ?', [id]);
+
+          if (quiz[0] ? .pic_path) {
+            // GitHub에서 이미지 삭제
+            await deleteImageFromGitHub(quiz[0].pic_path);
+          }
+
+          // DB에서 레코드 삭제
+          await db.query('DELETE FROM QUIZ WHERE id = ?', [id]);
+
+    return NextResponse.json({
+      message: '퀴즈가 성공적으로 삭제되었습니다.'
     });
   } catch (error) {
     console.error(error);
