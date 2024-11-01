@@ -1,4 +1,17 @@
 'use client';
+
+import { Suspense } from 'react';
+import AddQuizContent from '@/app/components/admin/AddQuizContent';
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AddQuizContent />
+    </Suspense>
+  );
+}
+'use client';
+
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, useRef } from 'react';
@@ -6,7 +19,7 @@ import { toast } from 'react-toastify';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-const Page = () => {
+export default function AddQuizContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
@@ -42,7 +55,7 @@ const Page = () => {
       setData((prev) => ({
         ...prev,
         type: 'PIC',
-        pic_path: file.name, // 파일 이름을 pic_path에 설정
+        pic_path: file.name,
       }));
     }
   };
@@ -60,7 +73,6 @@ const Page = () => {
   };
 
   useEffect(() => {
-    // 컴포넌트가 언마운트될 때 URL 객체 해제
     return () => {
       if (imagePreview) {
         URL.revokeObjectURL(imagePreview);
@@ -113,7 +125,6 @@ const Page = () => {
 
       if (response.ok) {
         toast.success('퀴즈가 성공적으로 추가되었습니다.');
-        // 폼 초기화
         setData({
           question: '',
           option1: '',
@@ -125,7 +136,6 @@ const Page = () => {
           type: 'TXT',
           pic_path: '',
         });
-        // 이미지 관련 상태 초기화
         setImage(null);
         setImagePreview(null);
         if (fileInputRef.current) {
@@ -342,6 +352,4 @@ const Page = () => {
       </div>
     </div>
   );
-};
-
-export default Page;
+}
