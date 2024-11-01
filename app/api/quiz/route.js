@@ -110,7 +110,7 @@ export async function GET(request) {
     sqlParams.push(limit, offset);
 
     const [quiz] = await db.query(sql, sqlParams);
-    console.log('쿼리 결과:', quiz);
+    // console.log('쿼리 결과:', quiz);
 
     const [countResult] = await db.query(countSql, countSqlParams);
     console.log('카운트 결과:', countResult);
