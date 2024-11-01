@@ -65,6 +65,7 @@ async function deleteImageFromGitHub(filePath) {
 }
 
 export async function GET(request) {
+  console.log('GET 요청 시작');
   const {
     searchParams
   } = new URL(request.url);
@@ -81,7 +82,10 @@ export async function GET(request) {
   }
 
   try {
+    console.log('데이터베이스 연결 시도...');
     const db = await createConnection();
+    console.log('데이터베이스 연결 성공!');
+
     let sql = "SELECT * FROM QUIZ";
     let countSql = "SELECT COUNT(*) as total FROM QUIZ";
     const sqlParams = [];
@@ -106,8 +110,13 @@ export async function GET(request) {
     sqlParams.push(limit, offset);
 
     const [quiz] = await db.query(sql, sqlParams);
+    console.log('쿼리 결과:', quiz);
+
     const [countResult] = await db.query(countSql, countSqlParams);
+    console.log('카운트 결과:', countResult);
+
     const total = countResult[0].total;
+    console.log('총 레코드 수:', total);
 
     // 세션 ID가 없는 경우에만 새 세션 생성 (기존 로직 유지)
     if (!sessionId) {
@@ -143,9 +152,22 @@ export async function GET(request) {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error('상세 에러 정보:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      errno: error.errno,
+      sqlState: error.sqlState,
+      sqlMessage: error.sqlMessage
+    });
     return NextResponse.json({
-      error: error.message
+      error: error.message,
+        details: {
+          code: error.code,
+          errno: error.errno,
+          sqlState: error.sqlState,
+          sqlMessage: error.sqlMessage
+        }
     }, {
       status: 500
     });
