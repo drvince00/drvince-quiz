@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 export default function Home() {
   const inputRef = useRef();
   const [quiz, setQuiz] = useState(null);
@@ -15,6 +18,8 @@ export default function Home() {
   const wrongAudioRef = useRef(null);
 
   const [audioLoaded, setAudioLoaded] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     console.log('오디오 프리로드 시작');
@@ -28,12 +33,15 @@ export default function Home() {
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         const res = await axios.get(`/api/quiz`, { params: { questType, limit: questionCount } });
         setQuiz(res.data);
-        console.log('quiz:', res.data);
+        console.log('quiz 데이터 로드됨:', res.data);
       } catch (err) {
-        console.log(err);
+        console.error('quiz 데이터 로드 실패:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchData();
@@ -41,10 +49,22 @@ export default function Home() {
 
   const handleClick = async () => {
     const name = inputRef.current.value;
-    if (name && audioLoaded) {
-      const response = await fetch(`/api/quiz?questType=${questType}&limit=${questionCount}`);
-      const { sessionId } = await response.json();
-      router.push(`/quiz/${sessionId}?userName=${encodeURIComponent(name)}`);
+    console.log('현재 상태:', { name, audioLoaded, quiz, isLoading });
+
+    if (name && audioLoaded && quiz && !isLoading) {
+      try {
+        sessionStorage.setItem('quizData', JSON.stringify(quiz.quiz));
+        await router.push(`/quiz/play?userName=${encodeURIComponent(name)}`);
+      } catch (error) {
+        console.error('라우팅 에러:', error);
+      }
+    } else {
+      console.log('조건 미충족:', {
+        name: !!name,
+        audioLoaded,
+        hasQuiz: !!quiz,
+        isLoading,
+      });
     }
   };
 
@@ -93,12 +113,12 @@ export default function Home() {
         />
         <button
           className={`w-full h-8 ${
-            audioLoaded ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400'
+            audioLoaded && !isLoading ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400'
           } text-white rounded text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50`}
           onClick={handleClick}
-          disabled={!audioLoaded}
+          disabled={!audioLoaded || isLoading}
         >
-          {audioLoaded ? 'Start' : 'Loading...'}
+          {isLoading ? 'Loading Quiz...' : audioLoaded ? 'Start' : 'Loading Audio...'}
         </button>
       </div>
     </div>

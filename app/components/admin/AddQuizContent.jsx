@@ -6,6 +6,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import axios from 'axios';
 
 export default function AddQuizContent() {
   const router = useRouter();
@@ -72,25 +73,31 @@ export default function AddQuizContent() {
     if (id) {
       const fetchQuizData = async () => {
         try {
-          const response = await fetch(`/api/quiz/${id}`);
-          if (response.ok) {
-            const quizData = await response.json();
-            setData({
-              question: quizData.question || '',
-              option1: quizData.option1 || '',
-              option2: quizData.option2 || '',
-              option3: quizData.option3 || '',
-              option4: quizData.option4 || '',
-              ans: quizData.ans || '1',
-              quest_type: quizData.quest_type || 'TOPIK',
-              type: quizData.type || 'TXT',
-              pic_path: quizData.pic_path || '',
-            });
-          } else {
-            console.error('퀴즈 데이터를 가져오는데 실패했습니다.');
-          }
+          const response = await axios.get(`/api/quiz`, {
+            params: {
+              id: id,
+              t: new Date().getTime(),
+            },
+            headers: {
+              'Cache-Control': 'no-cache',
+            },
+          });
+
+          const quizData = response.data;
+          setData({
+            question: quizData.question || '',
+            option1: quizData.option1 || '',
+            option2: quizData.option2 || '',
+            option3: quizData.option3 || '',
+            option4: quizData.option4 || '',
+            ans: quizData.ans || '1',
+            quest_type: quizData.quest_type || 'TOPIK',
+            type: quizData.type || 'TXT',
+            pic_path: quizData.pic_path || '',
+          });
         } catch (error) {
           console.error('퀴즈 데이터를 로드하는 중 오류 발생:', error);
+          toast.error('데이터 로드 실패');
         }
       };
 
@@ -106,12 +113,14 @@ export default function AddQuizContent() {
     if (image) formData.append('image', image);
 
     try {
-      const response = await fetch('/api/quiz', {
-        method: 'POST',
-        body: formData,
+      const response = await axios.post('/api/quiz', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Cache-Control': 'no-cache',
+        },
       });
 
-      if (response.ok) {
+      if (response.status === 200) {
         toast.success('퀴즈가 성공적으로 추가되었습니다.');
         setData({
           question: '',
@@ -142,15 +151,14 @@ export default function AddQuizContent() {
     e.preventDefault();
 
     try {
-      const response = await fetch(`/api/quiz/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
+      const response = await axios.put(`/api/quiz`, data, {
+        params: { id: id },
         headers: {
-          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
         },
       });
 
-      if (response.ok) {
+      if (response.status === 200) {
         toast.success('퀴즈가 성공적으로 수정되었습니다.');
         router.push('/admin/list');
       } else {
@@ -160,6 +168,11 @@ export default function AddQuizContent() {
       console.error('Error:', error);
       toast.error('서버 오류가 발생했습니다.');
     }
+  };
+
+  const getGithubImageUrl = (picPath) => {
+    if (!picPath) return null;
+    return `https://raw.githubusercontent.com/drvince00/drvince-quiz/main/public${picPath}`;
   };
 
   return (
@@ -217,11 +230,15 @@ export default function AddQuizContent() {
           {id && data.pic_path && (
             <div className="mb-4">
               <Image
-                src={`/${data.pic_path.replace(/^\//, '')}`}
+                src={getGithubImageUrl(data.pic_path)}
                 alt="Quiz Image"
                 width={200}
                 height={200}
                 className="object-cover"
+                onError={(e) => {
+                  console.error('이미지 로딩 실패:', data.pic_path);
+                  e.target.src = '/no-image.png';
+                }}
               />
             </div>
           )}

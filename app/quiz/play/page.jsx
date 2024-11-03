@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Swal from 'sweetalert2';
 
@@ -9,7 +9,7 @@ import volumeon from '../../../public/volumeon.png';
 import volumeoff from '../../../public/volumeoff.png';
 import stopBtn from '../../../public/stop.png';
 
-export default function Quiz() {
+export default function QuizPlay() {
   const [quiz, setQuiz] = useState([]);
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
@@ -23,44 +23,41 @@ export default function Quiz() {
   const [categoryStats, setCategoryStats] = useState({});
 
   const option_array = [useRef(null), useRef(null), useRef(null), useRef(null)];
-
   const router = useRouter();
-  const { sessionId } = useParams();
   const searchParams = useSearchParams();
 
-  const correctAudioRef = useRef(null);
-  const wrongAudioRef = useRef(null);
+  const correctAudioRef = useRef(new Audio('/sounds/correct.mp3'));
+  const wrongAudioRef = useRef(new Audio('/sounds/wrong.mp3'));
 
   useEffect(() => {
-    console.log('오디오 로드 시작');
-    correctAudioRef.current = new Audio('/sounds/correct.mp3');
-    wrongAudioRef.current = new Audio('/sounds/wrong.mp3');
-    console.log('오디오 로드 완료');
-  }, []);
+    console.log('퀴즈 페이지 마운트');
+    // sessionStorage에서 퀴즈 데이터 가져오기
+    const quizData = sessionStorage.getItem('quizData');
+    // console.log('sessionStorage 데이터:', quizData);
 
-  useEffect(() => {
-    async function fetchQuizData() {
-      console.log('퀴즈 데이터 로딩 시작');
-      try {
-        const response = await fetch(`/api/quiz?sessionId=${sessionId}`);
-        const data = await response.json();
-        console.log('퀴즈 데이터 로드 완료:', data);
-        setQuiz(data.quiz);
-        setQuestion(data.quiz[0]);
-      } catch (error) {
-        console.error('퀴즈 데이터를 불러오는 데 실패했습니다:', error);
-      } finally {
-        setLoading(false);
-      }
+    if (quizData) {
+      const parsedData = JSON.parse(quizData);
+      console.log('파싱된 퀴즈 데이터:', parsedData);
+      setQuiz(parsedData);
+      setQuestion(parsedData[0]);
+      setLoading(false);
+    } else {
+      console.log('퀴즈 데이터 없음');
     }
-    fetchQuizData();
+
     setUserName(searchParams.get('userName') || 'User');
-  }, [sessionId, searchParams]);
+  }, [searchParams]);
 
   useEffect(() => {
     if (question && question.type === 'PIC') {
-      // pic_path가 이미 전체 경로를 포함하고 있으므로, 추가적인 '/quiz/' 경로를 붙이지 않습니다.
-      setImageSrc(question.pic_path);
+      console.log('Question 데이터:', question);
+      console.log('원본 이미지 경로:', question.pic_path);
+
+      // GitHub raw 콘텐츠 URL 생성
+      const githubUrl = `https://raw.githubusercontent.com/drvince00/drvince-quiz/main/public${question.pic_path}`;
+
+      console.log('GitHub 이미지 URL:', githubUrl);
+      setImageSrc(githubUrl);
     }
   }, [question]);
 
@@ -79,7 +76,6 @@ export default function Quiz() {
 
   const playSound = async (isCorrect) => {
     if (!isSoundOn) return;
-
     try {
       const audioRef = isCorrect ? correctAudioRef.current : wrongAudioRef.current;
       if (audioRef) {
@@ -229,6 +225,10 @@ export default function Quiz() {
                   width={400}
                   height={400}
                   className="w-full h-auto object-contain"
+                  onError={(e) => {
+                    console.error('이미지 로딩 실패:', imageSrc);
+                    // 대체 이미지 표시 또는 다른 처리
+                  }}
                 />
               </div>
             )}

@@ -13,6 +13,9 @@ const nextConfig = {
 
     return config;
   },
+  images: {
+    domains: ['raw.githubusercontent.com'],
+  },
 };
 
 export default nextConfig;

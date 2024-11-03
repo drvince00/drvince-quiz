@@ -68,6 +68,11 @@ export default function List() {
     });
   };
 
+  const getGithubImageUrl = (picPath) => {
+    if (!picPath) return null;
+    return `https://raw.githubusercontent.com/drvince00/drvince-quiz/main/public${picPath}`;
+  };
+
   return (
     <div className="container mx-auto p-4 w-4/5">
       <div className="flex justify-between items-center mb-4">
@@ -105,7 +110,16 @@ export default function List() {
               <td className="border border-gray-300 p-2">
                 {quiz.pic_path ? (
                   <div className="flex justify-center items-center">
-                    <Image src={quiz.pic_path} alt="Quiz Image" width={50} height={50} />
+                    <Image
+                      src={getGithubImageUrl(quiz.pic_path)}
+                      alt="Quiz Image"
+                      width={50}
+                      height={50}
+                      onError={(e) => {
+                        console.error('이미지 로딩 실패:', quiz.pic_path);
+                        e.target.src = '/no-image.png'; // 기본 이미지로 대체
+                      }}
+                    />
                   </div>
                 ) : (
                   <div className="flex justify-center items-center w-full h-full">
