@@ -51,22 +51,22 @@ export default function Home() {
     fetchQuiz();
   }, [questType, questionCount]);
 
-  useEffect(() => {
-    console.log('현재 상태:', {
-      audioLoaded,
-      hasQuiz: !!quiz,
-      quizData: quiz,
-    });
-  }, [audioLoaded, quiz]);
+  // useEffect(() => {
+  //   console.log('현재 상태:', {
+  //     audioLoaded,
+  //     hasQuiz: !!quiz,
+  //     quizData: quiz,
+  //   });
+  // }, [audioLoaded, quiz]);
 
   const handleClick = async () => {
     const name = inputRef.current.value;
-    console.log('시작 버튼 클릭:', {
-      name,
-      audioLoaded,
-      hasQuiz: !!quiz,
-      quizData: quiz,
-    });
+    // console.log('시작 버튼 클릭:', {
+    //   name,
+    //   audioLoaded,
+    //   hasQuiz: !!quiz,
+    //   quizData: quiz,
+    // });
 
     if (name && audioLoaded && quiz) {
       try {

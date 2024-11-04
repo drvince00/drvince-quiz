@@ -30,14 +30,14 @@ export default function QuizPlay() {
   const wrongAudioRef = useRef(new Audio('/sounds/wrong.mp3'));
 
   useEffect(() => {
-    console.log('퀴즈 페이지 마운트');
+    // console.log('퀴즈 페이지 마운트');
     // sessionStorage에서 퀴즈 데이터 가져오기
     const quizData = sessionStorage.getItem('quizData');
     // console.log('sessionStorage 데이터:', quizData);
 
     if (quizData) {
       const parsedData = JSON.parse(quizData);
-      console.log('파싱된 퀴즈 데이터:', parsedData);
+      // console.log('파싱된 퀴즈 데이터:', parsedData);
       setQuiz(parsedData);
       setQuestion(parsedData[0]);
       setLoading(false);
@@ -50,8 +50,8 @@ export default function QuizPlay() {
 
   useEffect(() => {
     if (question && question.type === 'PIC') {
-      console.log('Question 데이터:', question);
-      console.log('원본 이미지 경로:', question.pic_path);
+      // console.log('Question 데이터:', question);
+      // console.log('원본 이미지 경로:', question.pic_path);
 
       // GitHub raw 콘텐츠 URL 생성
       const githubUrl = `https://raw.githubusercontent.com/drvince00/drvince-quiz/main/public${question.pic_path}`;

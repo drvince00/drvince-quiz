@@ -86,7 +86,6 @@ export async function GET(request) {
       countSqlParams.push(questType);
     }
 
-
     if (isRandom) {
       sql += ' ORDER BY RAND() LIMIT ?';
       sqlParams.push(limit);
@@ -94,10 +93,10 @@ export async function GET(request) {
       sql += ' ORDER BY id ASC LIMIT ? OFFSET ?';
       sqlParams.push(limit, offset);
     }
-    console.log('isRandom:', isRandom);
-    console.log('sql:', sql);
-    console.log('sqlParams:', sqlParams);
-    
+    // console.log('isRandom:', isRandom);
+    // console.log('sql:', sql);
+    // console.log('sqlParams:', sqlParams);
+
     const [quiz] = await db.query(sql, sqlParams);
     const [countResult] = await db.query(countSql, countSqlParams);
     const total = countResult[0].total;
