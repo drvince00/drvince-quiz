@@ -86,6 +86,13 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">
+      <img
+        src="/quiztokr_logo.png"
+        alt="Quiztokr Logo"
+        className="mb-4"
+        style={{ width: '380px', height: 'auto' }}
+      />
+
       <div className="w-64 space-y-4">
         <div className="flex items-center gap-2 space-x-2">
           <label htmlFor="questType" className="text-lg font-medium">
