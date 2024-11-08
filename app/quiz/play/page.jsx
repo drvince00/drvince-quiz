@@ -209,7 +209,7 @@ export default function QuizPlay() {
                 <Image src={stopBtn} alt="stopBtn" width={20} height={20} />
               </button>
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-5">Quiz App</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-5">K-Quiz Cat</h1>
             <hr className="h-0.5 bg-[#707070] border-0 mb-5" />
           </div>
           <div
