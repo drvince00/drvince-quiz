@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import qs from 'qs';
 
 export const fetchCache = 'force-no-store';
 export const revalidate = 0;
@@ -19,7 +20,17 @@ export default function Home() {
 
   const [audioLoaded, setAudioLoaded] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [selectedCategories, setSelectedCategories] = useState(['Topik', 'Food', 'Culture']);
+
+  const handleCategoryChange = (category) => {
+    setSelectedCategories((prevCategories) =>
+      prevCategories.includes(category)
+        ? prevCategories.filter((c) => c !== category)
+        : [...prevCategories, category]
+    );
+  };
 
   useEffect(() => {
     console.log('오디오 프리로드 시작');
@@ -32,41 +43,37 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const fetchQuiz = async () => {
-      try {
-        const res = await axios.get(`/api/quiz`, {
-          params: {
-            questType,
-            limit: questionCount,
-            random: true,
-          },
-        });
-        setQuiz(res.data);
-        console.log('퀴즈 데이터 로드됨:', res.data);
-      } catch (err) {
-        console.error('퀴즈 데이터 로드 실패:', err);
-      }
-    };
+    if (selectedCategories.length > 0) {
+      const fetchQuiz = async () => {
+        setIsLoading(true);
+        try {
+          const res = await axios.get(`/api/quiz`, {
+            params: {
+              questType: selectedCategories,
+              limit: questionCount,
+              random: true,
+            },
+            paramsSerializer: (params) => {
+              return qs.stringify(params, { arrayFormat: 'repeat' });
+            },
+          });
+          setQuiz(res.data);
+          console.log('퀴즈 데이터 로드됨:', res.data);
+        } catch (err) {
+          console.error('퀴즈 데이터 로드 실패:', err);
+        } finally {
+          setIsLoading(false);
+        }
+      };
 
-    fetchQuiz();
-  }, [questType, questionCount]);
-
-  // useEffect(() => {
-  //   console.log('현재 상태:', {
-  //     audioLoaded,
-  //     hasQuiz: !!quiz,
-  //     quizData: quiz,
-  //   });
-  // }, [audioLoaded, quiz]);
+      fetchQuiz();
+    } else {
+      setQuiz(null);
+    }
+  }, [selectedCategories, questionCount]);
 
   const handleClick = async () => {
     const name = inputRef.current.value;
-    // console.log('시작 버튼 클릭:', {
-    //   name,
-    //   audioLoaded,
-    //   hasQuiz: !!quiz,
-    //   quizData: quiz,
-    // });
 
     if (name && audioLoaded && quiz) {
       try {
@@ -94,23 +101,21 @@ export default function Home() {
       />
 
       <div className="w-64 space-y-4">
-        <div className="flex items-center gap-2 space-x-2">
-          <label htmlFor="questType" className="text-lg font-medium">
+        <div className="flex justify-center items-center gap-2">
+          <label className="text-lg font-medium" style={{ marginRight: '16px' }}>
             Category
           </label>
-          <select
-            id="questType"
-            name="questType"
-            className="flex-1 px-3 py-2 border rounded-md"
-            value={questType}
-            onChange={(e) => setQuestType(e.target.value)}
-          >
-            {['All', 'Topik', 'Food', 'Culture'].map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
+          {['Topik', 'Food', 'Culture'].map((type) => (
+            <label key={type} className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={selectedCategories.includes(type)}
+                onChange={() => handleCategoryChange(type)}
+                className="form-checkbox"
+              />
+              <span>{type}</span>
+            </label>
+          ))}
         </div>
 
         <div className="flex justify-around items-center">
@@ -136,12 +141,12 @@ export default function Home() {
         />
         <button
           className={`w-full h-8 ${
-            audioLoaded && quiz ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400'
+            audioLoaded && quiz && !isLoading ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400'
           } text-white rounded text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50`}
           onClick={handleClick}
-          disabled={!audioLoaded || !quiz}
+          disabled={!audioLoaded || !quiz || selectedCategories.length === 0 || isLoading}
         >
-          {!audioLoaded ? 'Loading Audio...' : 'Start'}
+          {isLoading ? 'Loading...' : !audioLoaded ? 'Loading Audio...' : 'Start'}
         </button>
       </div>
     </div>

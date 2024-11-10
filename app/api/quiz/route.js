@@ -55,7 +55,8 @@ export const revalidate = 0;
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
-  const questType = searchParams.get('questType') || 'All';
+  const question = searchParams.get('question');
+  const questTypes = searchParams.getAll('questType');
   const limit = parseInt(searchParams.get('limit')) || 10;
   const page = parseInt(searchParams.get('page')) || 1;
   const offset = (page - 1) * limit;
@@ -64,8 +65,8 @@ export async function GET(request) {
   try {
     const db = await createConnection();
 
-    // 개별 퀴즈 조회
-    if (id) {
+    // ID로 검색하는 경우 (다른 조건 무시)
+    if (searchParams.has('id')) {
       const [quiz] = await db.query('SELECT * FROM QUIZ WHERE id = ?', [id]);
       if (quiz.length === 0) {
         return NextResponse.json({ message: '퀴즈를 찾을 수 없습니다.' }, { status: 404 });
@@ -73,19 +74,31 @@ export async function GET(request) {
       return NextResponse.json(quiz[0]);
     }
 
-    // 퀴즈 목록 조회
+    // 퀴즈 목록 조회 (ID 검색이 아닌 경우)
     let sql = 'SELECT * FROM QUIZ';
     let countSql = 'SELECT COUNT(*) as total FROM QUIZ';
     const sqlParams = [];
     const countSqlParams = [];
 
-    if (questType !== 'All') {
-      sql += ' WHERE quest_type = ?';
-      countSql += ' WHERE quest_type = ?';
-      sqlParams.push(questType);
-      countSqlParams.push(questType);
+    // WHERE 절 구성 (기존 questTypes 조건)
+    if (questTypes.length > 0) {
+      const placeholders = questTypes.map(() => '?').join(', ');
+      sql += ` WHERE quest_type IN (${placeholders})`;
+      countSql += ` WHERE quest_type IN (${placeholders})`;
+      sqlParams.push(...questTypes);
+      countSqlParams.push(...questTypes);
     }
 
+    // question 검색 조건 추가 (ID 검색이 아닌 경우에만)
+    if (searchParams.has('question')) {
+      const whereClause = sql.includes('WHERE') ? ' AND' : ' WHERE';
+      sql += `${whereClause} question LIKE ?`;
+      countSql += `${whereClause} question LIKE ?`;
+      sqlParams.push(`%${question}%`);
+      countSqlParams.push(`%${question}%`);
+    }
+
+    // 정렬 및 페이징
     if (isRandom) {
       sql += ' ORDER BY RAND() LIMIT ?';
       sqlParams.push(limit);
@@ -93,10 +106,8 @@ export async function GET(request) {
       sql += ' ORDER BY id ASC LIMIT ? OFFSET ?';
       sqlParams.push(limit, offset);
     }
-    // console.log('isRandom:', isRandom);
-    // console.log('sql:', sql);
-    // console.log('sqlParams:', sqlParams);
 
+    console.log('sql:', sql);
     const [quiz] = await db.query(sql, sqlParams);
     const [countResult] = await db.query(countSql, countSqlParams);
     const total = countResult[0].total;
