@@ -1,4 +1,3 @@
-import Head from 'next/head';
 import { Outfit } from 'next/font/google';
 import './globals.css';
 import { ToastContainer } from 'react-toastify';
@@ -20,9 +19,22 @@ export const revalidate = 0;
 export default function RootLayout({ children }) {
   return (
     <html lang="ko">
-      <Head>
+      <head>
+        {/* Google Analytics */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-5S66HQDXH4"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-5S66HQDXH4');
+            `,
+          }}
+        />
+        {/* End Google Analytics */}
         <link rel="icon" href="/favicon.ico" />
-      </Head>
+      </head>
       <body className={outfit.className}>
         {children}
         <ToastContainer />
