@@ -21,6 +21,7 @@ export default function QuizPlay() {
   const [imageSrc, setImageSrc] = useState(null);
   const [userName, setUserName] = useState('User');
   const [categoryStats, setCategoryStats] = useState({});
+  const [congratsImage, setCongratsImage] = useState('');
 
   const option_array = [useRef(null), useRef(null), useRef(null), useRef(null)];
   const router = useRouter();
@@ -73,6 +74,16 @@ export default function QuizPlay() {
       setCategoryStats(stats);
     }
   }, [quiz]);
+
+  useEffect(() => {
+    if (result) {
+      const totalScore = (score / quiz.length) * 100;
+      if (totalScore >= 70) {
+        const randomNum = Math.floor(Math.random() * 11) + 1;
+        setCongratsImage(`/congrats/congrats${randomNum}.jpg`);
+      }
+    }
+  }, [result, score, quiz.length]);
 
   const playSound = async (isCorrect) => {
     if (!isSoundOn) return;
@@ -197,6 +208,33 @@ export default function QuizPlay() {
           >
             Retry
           </button>
+          {congratsImage && (
+            <div className="mt-8">
+              <Image
+                src={congratsImage}
+                alt="Congratulations"
+                width={400}
+                height={300}
+                className="rounded-lg"
+              />
+            </div>
+          )}
+          <div className="mt-8 flex items-center gap-2">
+            <a
+              href="https://www.facebook.com/profile.php?id=61568543280425"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+            >
+              <Image src="/facebook_icon.png" alt="Facebook" width={24} height={24} />
+              <div className="flex flex-col">
+                <span>Visit our facebook page.</span>
+                <span className="text-sm text-gray-600">
+                  You can suggest your own quiz and leave suggestion.
+                </span>
+              </div>
+            </a>
+          </div>
         </div>
       ) : (
         <>
